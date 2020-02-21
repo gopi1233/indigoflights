@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd 
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+    <apikit:config name="indigoFlights-config" api="indigoFlights.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
+    <http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="db8043ac-ad96-4d5d-a124-843c1290644e">
+        <http:request-connection host="indigo-airlines.us-e2.cloudhub.io" port="80" />
+    </http:request-config>
+    <flow name="indigoFlights-main">
+        <http:listener doc:name="Listener" doc:id="8ef37f0d-dc47-4e17-9c25-6bfdc9d22762" config-ref="MULEDOMAIN" path="/api/*" />
+        <apikit:router config-ref="indigoFlights-config" />
+        <error-handler>
+            <on-error-propagate type="APIKIT:BAD_REQUEST">
+                <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Bad request"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">400</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_FOUND">
+                <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Resource not found"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">404</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:METHOD_NOT_ALLOWED">
+                <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Method not allowed"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">405</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_ACCEPTABLE">
+                <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Not acceptable"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">406</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:UNSUPPORTED_MEDIA_TYPE">
+                <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Unsupported media type"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">415</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_IMPLEMENTED">
+                <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Not Implemented"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">501</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+    <flow name="indigoFlights-console">
+        <http:listener doc:name="Listener" doc:id="644afe1e-01f8-4d5c-9951-7d8c7db3438b" config-ref="MULEDOMAIN" path="/console/*" />
+        <apikit:console config-ref="indigoFlights-config" />
+        <error-handler>
+            <on-error-propagate type="APIKIT:NOT_FOUND">
+                <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Resource not found"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">404</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+    <flow name="get:\indigoFlights:indigoFlights-config">
+        <logger level="INFO" message="indigoflights flow starts......#[payload]" />
+        <http:request method="GET" doc:name="Request" doc:id="42e54031-cb7f-4261-8abd-71a372a67682" config-ref="HTTP_Request_configuration" path="/api/getFlights">
+            <http:query-params><![CDATA[#[output application/java
+---
+{
+	from : attributes.queryParams.from,
+	to : attributes.queryParams.to,
+	depatureDate : attributes.queryParams.depatureDate
+}]]]></http:query-params>
+        </http:request>
+        <logger level="INFO" doc:name="Logger" doc:id="ebdadb46-2316-41b3-a002-164a15c03291" message="response of indigo flights..#[payload]." />
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="bf29d36e-d9b4-44c8-bf8d-97b70a5b49ce" >
+				<ee:transform doc:name="Transform Message" doc:id="dddc34a5-1723-455b-80e8-52a576a53e2a" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	
+	"message":"server not working"
+	
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</on-error-continue>
+		</error-handler>
+    </flow>
+</mule>

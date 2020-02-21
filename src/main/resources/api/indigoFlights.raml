@@ -1,0 +1,21 @@
+#%RAML 1.0
+title: indigoFligts API
+
+baseUri: http://localhost:8081/api
+
+
+types: 
+  Flight: !include datatypes/Flight.raml
+
+/indigoFlights:  
+  get: 
+   body:
+   queryParameters: 
+    from:
+    to:
+    depatureDate:
+   responses: 
+    200:
+     body: 
+      application/json: 
+       type: Flight
